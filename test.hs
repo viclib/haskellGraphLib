@@ -7,6 +7,7 @@ import Control.Applicative
 import Data.List.Split
 import Control.Monad
 import Control.Parallel (par, pseq)
+import qualified Data.Vector as Vector
 import qualified Data.List as List
 import qualified Data.Set as Set
 import qualified Data.IntMap as Map
@@ -19,8 +20,8 @@ import Debug.Trace
 import Data.Char
 
 {- This is horrible, sorry :( I need to learn parsec -}
-parse :: Text.Text -> Array Int [(Int,Int)]
-parse txt = runST $ build graphSize edges where
+parse :: Text.Text -> Vector.Vector (Vector.Vector (Int,Int))
+parse txt = toVector $ runST $ build graphSize edges where
     parseInt t  = let (Right (x,_)) = Text.decimal t in x
     parseEdge   = ((Text.findIndex (== ' ') >>> fromJust >>> (+ 1)) >>= Text.splitAt) >>> (\(a,b)->(parseInt a,parseInt b))
     headIndex   = fromJust $ Text.findIndex (== '\n') txt
@@ -35,6 +36,7 @@ parse txt = runST $ build graphSize edges where
             writeArray neigs a ((b,1):aNeigs)
             writeArray neigs b ((a,1):bNeigs)
         unsafeFreeze neigs
+    toVector arr = Vector.map Vector.fromList (Vector.fromList (elems arr))
 
 main = do
     txt <- Text.readFile "./dblp.txt"
